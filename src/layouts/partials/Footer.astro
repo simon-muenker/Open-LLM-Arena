@@ -1,0 +1,34 @@
+---
+
+const footerNav = [
+    {
+        label: "Simon Münker",
+        url: "https://simon-muenker.github.io/"
+    },
+    {
+        label: "GitHub",
+        url: "https://github.com/simon-muenker/Open-LLM-Arena"
+    },
+    {
+        label: "TWON Project",
+        url: "https://www.twon-project.eu/"
+    }
+]
+
+---
+
+<footer>
+    <nav class="w-auto max-w-md mx-auto px-2">
+        <div class="flex flex-row justify-between gap-2 p-2 inset-shadow-sm bg-gray-100 rounded-full">
+            {footerNav.map(item => 
+                <a 
+                    class="text-sm text-gray-600 px-4 py-2 rounded-full hover:bg-white hover:shadow-sm transition-all" 
+                    href={item.url} 
+                    target="_blank"
+                >
+                    {item.label}
+                </a>
+            )}
+        </div>
+    </nav>
+</footer>

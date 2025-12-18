@@ -1,22 +1,23 @@
+---
+import "@styles/global.css";
+
+import Header from "@layouts/partials/Header.astro";
+import Footer from "@layouts/partials/Footer.astro";
+---
+
 <!doctype html>
 <html lang="en">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
+
+		<title>Open LLM Arena</title>
 	</head>
-	<body>
-		<slot />
+	<body class="bg-gray-50">
+		<Header />
+		<main class="mt-16 mb-32">
+			<slot></slot>
+		</main>
+		<Footer />
 	</body>
 </html>
-
-<style>
-	html,
-	body {
-		margin: 0;
-		width: 100%;
-		height: 100%;
-	}
-</style>
