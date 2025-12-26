@@ -5,6 +5,6 @@
 </script>
 
 <div class="mt-12 w-auto max-w-2xl mx-auto shadow-sm p-4 bg-gray-100 rounded-xl">
-    <label for="">Hugging Face API Key</label>
-    <input type="text" bind:value={accessToken} onchange={() => settingsStore.setKey("accessToken", accessToken)}>
+    <label class="block text-sm mb-1" for="">Hugging Face API Key</label>
+    <input class="inset-shadow-sm bg-gray-50" type="text" placeholder="HF-XXX" bind:value={accessToken} onchange={() => settingsStore.setKey("accessToken", accessToken)}>
 </div>
