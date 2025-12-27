@@ -1,6 +1,6 @@
 <script lang="ts">
     import snarkdown from "snarkdown";
-    
+
     import IconSparkles from '~icons/heroicons/sparkles';
     import IconExclamationCircle from '~icons/heroicons/exclamation-circle';
     import IconCheckCircle from '~icons/heroicons/check-circle';
@@ -11,18 +11,10 @@
     import { conversationsStore } from "@stores/messages";
     import { selectionStore } from "@stores/selection";
 
-    function getStatusIcon(status: string) {
-        switch (status) {
-            case 'loading': return IconArrowPath;
-            case 'error': return IconExclamationCircle;
-            case 'idle': return IconCheckCircle;
-            default: return IconCheckCircle;
-        }
-    }
 
     function getStatusColor(status: string) {
         switch (status) {
-            case 'loading': return 'text-blue-500 animate-pulse';
+            case 'loading': return 'text-blue-500 animate-spin';
             case 'error': return 'text-red-500';
             case 'idle': return 'text-green-500';
             default: return 'text-gray-500';
@@ -38,7 +30,6 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 max-w-7xl mx-auto">
         {#each Object.entries($conversationsStore) as [modelUrl, conversation]}
             {@const model = MODELS.find(m => m.url === modelUrl)}
-            {@const StatusIcon = getStatusIcon(conversation.status)}
             {#if model}
                 <div class="bg-white rounded-xl shadow-md p-6 flex flex-col h-full">
                     <div class="mb-4 pb-4 border-b border-gray-200 flex justify-between items-start">
@@ -47,7 +38,13 @@
                             <p class="text-sm text-gray-500">{model.size}B parameters</p>
                         </div>
                         <div class={`text-2xl ${getStatusColor(conversation.status)}`}>
-                            <StatusIcon />
+                            {#if conversation.status == "loading"}
+                                <IconArrowPath />
+                            {:else if conversation.status == "error"}
+                                <IconExclamationCircle />
+                            {:else}
+                                <IconCheckCircle />
+                            {/if}
                         </div>
                     </div>
 
