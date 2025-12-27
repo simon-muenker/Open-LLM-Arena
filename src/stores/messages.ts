@@ -1,21 +1,18 @@
+import { atom, computed } from "nanostores";
 import { persistentAtom } from "@nanostores/persistent";
 import { logger } from "@nanostores/logger";
 
-import { InferenceClient } from '@huggingface/inference';
+import type { Message, ConversationStore, ModelConversation } from "types";
+
+import { getInferenceService } from "@services/inference";
 
 import { settingsStore } from "@stores/settings";
 import { selectionStore } from "@stores/selection";
+
 import { PERSONAS } from "@assets/personas";
 
-
-interface Message {
-  role: "user" | "assistant";
-  content: string;
-}
-
-// Store Management
-export const messagesStore = persistentAtom<Record<string, Array<Message>>>(
-  "messages:",
+export const conversationsStore = persistentAtom<ConversationStore>(
+  "conversations:",
   {},
   {
     encode: JSON.stringify,
@@ -23,96 +20,177 @@ export const messagesStore = persistentAtom<Record<string, Array<Message>>>(
   }
 );
 
-// Logger
-logger({
-  feedStore: messagesStore,
-});
+export const isGeneratingStore = atom<boolean>(false);
 
-// Modifiers
-export function clearMessages(): void {
-  initializeConversations();
-}
+export const hasActiveConversationsStore = computed(
+  conversationsStore,
+  (convs) => Object.keys(convs).length > 0
+);
+
+export const anyModelLoadingStore = computed(
+  conversationsStore,
+  (convs) => Object.values(convs).some((conv: ModelConversation) => conv.status === 'loading')
+);
+
+logger({
+  conversations: conversationsStore,
+});
 
 export function initializeConversations(): void {
   const selectedModels = selectionStore.get().models;
-  const newStore: Record<string, Array<Message>> = {};
-  
-  selectedModels.forEach(model => {
-    newStore[model] = [];
+  const currentConvs = conversationsStore.get();
+  const newConvs: ConversationStore = {};
+
+  selectedModels.forEach(modelUrl => {
+
+    newConvs[modelUrl] = currentConvs[modelUrl] || {
+      messages: [],
+      status: 'idle'
+    };
   });
-  
-  messagesStore.set(newStore);
+
+  conversationsStore.set(newConvs);
 }
 
-export function addMessage(content: string): void {
-  const store = structuredClone(messagesStore.get());
+selectionStore.subscribe(selection => {
+  const currentConvs = conversationsStore.get();
+  const newConvs: ConversationStore = {};
+
+  selection.models.forEach(modelUrl => {
+    newConvs[modelUrl] = currentConvs[modelUrl] || {
+      messages: [],
+      status: 'idle'
+    };
+  });
+
+  conversationsStore.set(newConvs);
+});
+
+export function clearMessages(): void {
   const selectedModels = selectionStore.get().models;
-  
-  // Initialize conversations for newly selected models
-  selectedModels.forEach(model => {
-    if (!store[model]) {
-      store[model] = [];
-    }
+  const newConvs: ConversationStore = {};
+
+  selectedModels.forEach(modelUrl => {
+    newConvs[modelUrl] = {
+      messages: [],
+      status: 'idle'
+    };
   });
-  
-  // Remove conversations for deselected models
-  Object.keys(store).forEach(model => {
-    if (!selectedModels.includes(model)) {
-      delete store[model];
-    }
-  });
-  
-  const message: Message = {
+
+  conversationsStore.set(newConvs);
+}
+
+export async function sendMessage(content: string): Promise<void> {
+  if (!content.trim() || isGeneratingStore.get()) return;
+
+  const userMessage: Message = {
     role: "user",
-    content: content
+    content: content.trim(),
+    timestamp: Date.now()
   };
 
-  Object.values(store).forEach(conversation => {
-    conversation.push(message);
+  const convs = { ...conversationsStore.get() };
+  Object.keys(convs).forEach(modelUrl => {
+    convs[modelUrl] = {
+      ...convs[modelUrl],
+      messages: [...convs[modelUrl].messages, userMessage],
+      status: 'loading'
+    };
   });
 
-  messagesStore.set(store);
-  inferenceResponse();
+  conversationsStore.set(convs);
+  isGeneratingStore.set(true);
+
+  await generateResponses();
+  
+  isGeneratingStore.set(false);
 }
 
-async function inferenceResponse(): Promise<void> {
-  const client = new InferenceClient(settingsStore.get().accessToken);
-  const store = structuredClone(messagesStore.get());
-  const selectedPersona = selectionStore.get().persona;
-  
-  // Find the persona instruction
-  const persona = PERSONAS.find(p => p.name === selectedPersona);
+async function generateResponses(): Promise<void> {
+  const settings = settingsStore.get();
+  const selection = selectionStore.get();
+  const convs = conversationsStore.get();
+
+  if (!settings.accessToken) {
+    updateAllModelsStatus('error', 'Please set your Hugging Face API key');
+    return;
+  }
+
+  const service = getInferenceService(settings.accessToken);
+  const persona = PERSONAS.find(p => p.name === selection.persona);
   const systemInstruction = persona?.instruction || "";
 
-  for (const model in store) {
-    let conversation = store[model];
-    
-    // Prepare messages with system instruction if persona is set
-    let messagesToSend: any[] = conversation;
-    if (systemInstruction) {
-      messagesToSend = [
-        { role: "system", content: systemInstruction },
-        ...conversation
-      ];
-    }
-
+  const inferencePromises = Object.entries(convs).map(async ([modelUrl, conv]) => {
     try {
-      const chatCompletion = await client.chatCompletion({
-        model: model,
-        messages: messagesToSend
-      });
+      const response = await service.generateResponse(
+        modelUrl,
+        conv.messages,
+        systemInstruction
+      );
 
-      conversation.push(chatCompletion.choices[0].message as Message);
-    } catch (error) {
-      console.error(`Error with model ${model}:`, error);
-      conversation.push({
+      // Update this model's conversation
+      updateModelConversation(modelUrl, {
+        messages: [...conv.messages, response],
+        status: 'idle'
+      });
+    } catch (error: any) {
+      console.error(`Error with model ${modelUrl}:`, error);
+      
+      const errorMessage: Message = {
         role: "assistant",
-        content: `Error: Unable to generate response. Please check your API key and model availability.`
+        content: `⚠️ ${error.message}`,
+        timestamp: Date.now()
+      };
+
+      updateModelConversation(modelUrl, {
+        messages: [...conv.messages, errorMessage],
+        status: 'error',
+        error: error.message
       });
     }
-  }
-  messagesStore.set(store);
+  });
+
+  await Promise.allSettled(inferencePromises);
 }
 
-// Initialize on load
+function updateModelConversation(
+  modelUrl: string,
+  updates: Partial<ConversationStore[string]>
+): void {
+  const convs = conversationsStore.get();
+  conversationsStore.set({
+    ...convs,
+    [modelUrl]: {
+      ...convs[modelUrl],
+      ...updates
+    }
+  });
+}
+
+function updateAllModelsStatus(status: ConversationStore[string]['status'], error?: string): void {
+  const convs = conversationsStore.get();
+  const updated: ConversationStore = {};
+
+  Object.entries(convs).forEach(([modelUrl, conv]) => {
+    updated[modelUrl] = {
+      ...conv,
+      status,
+      error
+    };
+  });
+
+  conversationsStore.set(updated);
+}
+
+export function stopGeneration(): void {
+  const service = getInferenceService(settingsStore.get().accessToken);
+  service.cancelAllRequests();
+  updateAllModelsStatus('idle');
+  isGeneratingStore.set(false);
+}
+
+export function exportConversation(): string {
+  return JSON.stringify(conversationsStore.get(), null, 2);
+}
+
 initializeConversations();

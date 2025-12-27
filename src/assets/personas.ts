@@ -1,8 +1,4 @@
-export interface Persona {
-    name: string;
-    icon: string;
-    instruction: string;
-}
+import type { Persona } from "types";
 
 export const PERSONAS: Array<Persona> = [
     {

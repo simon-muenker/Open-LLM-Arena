@@ -1,8 +1,4 @@
-export interface Model {
-    name: string;
-    url: string;
-    size: number;
-}
+import type { Model } from "types";
 
 export const MODELS: Array<Model> = [
 	{

@@ -1,13 +1,9 @@
 import { persistentAtom } from "@nanostores/persistent";
 import { logger } from "@nanostores/logger";
 
-interface Selections {
-  models: string[];
-  persona: string;
-}
+import type { Selection } from "types";
 
-// Store Management
-export const selectionStore = persistentAtom<Selections>(
+export const selectionStore = persistentAtom<Selection>(
   "selections:",
   {
     models: [],
@@ -19,12 +15,10 @@ export const selectionStore = persistentAtom<Selections>(
   }
 );
 
-// Logger
 logger({
   selectionsStore: selectionStore,
 });
 
-// Modifiers
 export function toggleModel(modelUrl: string): void {
   const current = selectionStore.get();
   const models = current.models.includes(modelUrl)
