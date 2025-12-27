@@ -17,5 +17,5 @@ export const settingsStore = persistentMap<Settings>(
 
 // Logger
 logger({
-  feedStore: settingsStore,
+  settingsStore: settingsStore,
 });
