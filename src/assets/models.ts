@@ -17,33 +17,33 @@ export const MODELS: Array<Model> = [
 		size: 120
 	},
 	{
+		name: "Llama 3.3",
+		url: "meta-llama/Llama-3.3-70B-Instruct",
+		size: 70
+	},
+	{
 		name: "Olmo 3.1",
 		url: "allenai/Olmo-3.1-32B-Instruct",
 		size: 32
 	},
 	{
-		name: "Ministral 3",
-		url: "mistralai/Ministral-3-14B-Instruct-2512",
-		size: 14
-	},
-	{
 		name: "Qwen 3",
-		url: "Qwen/Qwen3-VL-8B-Instruct",
-		size: 8
+		url: "Qwen/Qwen3-32B",
+		size: 32
 	},
 	{
-		name: "Olmo 3",
-		url: "allenai/Olmo-3-7B-Instruct",
+		name: "Gemma 3",
+		url: "google/gemma-3-27b-it",
+		size: 27
+	},
+	{
+		name: "Mistral",
+		url: "mistralai/Mistral-7B-Instruct-v0.2",
 		size: 7
 	},
 	{
-		name: "Ministral 3",
-		url: "mistralai/Ministral-3-8B-Instruct-2512",
-		size: 8
-	},
-	{
-		name: "Qwen 3",
-		url: "Qwen/Qwen3-VL-4B-Instruct",
-		size: 4
+		name: "Llama 3.2",
+		url: "meta-llama/Llama-3.2-3B-Instruct",
+		size: 3
 	}
 ]
