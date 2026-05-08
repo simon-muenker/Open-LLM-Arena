@@ -86,7 +86,6 @@ export async function sendMessage(content: string): Promise<void> {
   const userMessage: Message = {
     role: "user",
     content: content.trim(),
-    timestamp: Date.now()
   };
 
   const convs = { ...conversationsStore.get() };
@@ -139,7 +138,6 @@ async function generateResponses(): Promise<void> {
       const errorMessage: Message = {
         role: "assistant",
         content: `⚠️ ${error.message}`,
-        timestamp: Date.now()
       };
 
       updateModelConversation(modelUrl, {

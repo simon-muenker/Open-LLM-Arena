@@ -38,7 +38,6 @@ export class InferenceService {
       return {
         role: response.role as "assistant",
         content: response.content || "No response generated",
-        timestamp: Date.now()
       };
     } catch (error: any) {
       if (error.name === 'AbortError') {
