@@ -22,13 +22,13 @@ export const MODELS: Array<Model> = [
 		size: 70
 	},
 	{
-		name: "Olmo 3.1",
-		url: "allenai/Olmo-3.1-32B-Instruct",
-		size: 32
+		name: "Qwen 3.6",
+		url: "Qwen/Qwen3.6-35B-A3B",
+		size: 35
 	},
 	{
-		name: "Qwen 3",
-		url: "Qwen/Qwen3-32B",
+		name: "Aya-Expanse",
+		url: "CohereLabs/aya-expanse-32b",
 		size: 32
 	},
 	{
@@ -37,13 +37,13 @@ export const MODELS: Array<Model> = [
 		size: 27
 	},
 	{
-		name: "Mistral",
-		url: "mistralai/Mistral-7B-Instruct-v0.2",
+		name: "Qwen 2.5",
+		url: "Qwen/Qwen2.5-7B-Instruct",
 		size: 7
 	},
 	{
 		name: "Llama 3.2",
-		url: "meta-llama/Llama-3.2-3B-Instruct",
-		size: 3
+		url: "meta-llama/Llama-3.2-1B-Instruct",
+		size: 1
 	}
 ]
